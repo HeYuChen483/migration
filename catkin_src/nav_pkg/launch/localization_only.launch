@@ -1,0 +1,17 @@
+<launch>
+    <!-- Safe localization-only launch: map_server + AMCL, no move_base, no cmd_vel. -->
+    <arg name="map_file" default="$(find wpr_simulation)/maps/map.yaml"/>
+    <arg name="initial_pose_x" default="6.75"/>
+    <arg name="initial_pose_y" default="0.35"/>
+    <arg name="initial_pose_a" default="1.5708"/>
+    <arg name="open_rviz" default="true"/>
+
+    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file)" output="screen"/>
+
+    <param name="/amcl/initial_pose_x" value="$(arg initial_pose_x)" type="double"/>
+    <param name="/amcl/initial_pose_y" value="$(arg initial_pose_y)" type="double"/>
+    <param name="/amcl/initial_pose_a" value="$(arg initial_pose_a)" type="double"/>
+    <include file="$(find wpb_home_tutorials)/nav_lidar/amcl_omni.launch"/>
+
+    <node if="$(arg open_rviz)" name="rviz_localization" pkg="rviz" type="rviz" args="-d $(find nav_pkg)/rviz/nav.rviz"/>
+</launch>

@@ -1,0 +1,22 @@
+<launch>
+  <!-- Task-layer entry for the enhanced YOLO-World cascade.  This keeps the
+       default bottle/Gazebo configs unchanged and only swaps the detection input
+       to the merged enhanced topic. -->
+  <arg name="config" default="$(find garbage_localization)/config/enhanced_detection.yaml"/>
+  <arg name="detection_topic" default="/yolo_world/enhanced_detections"/>
+  <arg name="point_cloud_topic" default="/kinect2/sd/points"/>
+  <arg name="camera_info_topic" default="/kinect2/hd/camera_info"/>
+  <arg name="output_topic" default="/garbage_localization/objects"/>
+  <arg name="output_frame" default="base_link"/>
+  <arg name="rgb_frame" default="kinect2_rgb_optical_frame"/>
+
+  <include file="$(find garbage_localization)/launch/garbage_localization.launch">
+    <arg name="config" value="$(arg config)"/>
+    <arg name="detection_topic" value="$(arg detection_topic)"/>
+    <arg name="point_cloud_topic" value="$(arg point_cloud_topic)"/>
+    <arg name="camera_info_topic" value="$(arg camera_info_topic)"/>
+    <arg name="output_topic" value="$(arg output_topic)"/>
+    <arg name="output_frame" value="$(arg output_frame)"/>
+    <arg name="rgb_frame" value="$(arg rgb_frame)"/>
+  </include>
+</launch>

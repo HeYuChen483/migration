@@ -1,0 +1,7 @@
+paper_ball robot-view specialist
+generation: 7
+date: 2026-09-06
+source run: paper_box_robotview_threefusion_specialist_continue7_20260906_150818_yoloworld_s
+included file: paper_ball_robotview_continue7_20260906_150818_best.onnx
+recommended live threshold: 0.12
+rgbd vote: disabled

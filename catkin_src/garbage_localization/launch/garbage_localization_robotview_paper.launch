@@ -1,0 +1,31 @@
+<launch>
+  <!-- Real-robot paper_ball localization entry. Safe: no navigation goal and no cmd_vel. -->
+  <arg name="config" default="$(find garbage_localization)/config/robotview_paper_real.yaml"/>
+  <arg name="detection_topic" default="/yolo_world/enhanced_detections"/>
+  <arg name="point_cloud_topic" default="/kinect2/hd/points"/>
+  <arg name="camera_info_topic" default="/kinect2/hd/camera_info"/>
+  <arg name="output_topic" default="/garbage_localization/objects"/>
+  <arg name="output_frame" default="map"/>
+  <arg name="rgb_frame" default="kinect2_rgb_optical_frame"/>
+  <arg name="enable_stabilizer" default="true"/>
+  <arg name="stable_output_topic" default="/garbage_localization/stable_objects"/>
+
+  <include file="$(find garbage_localization)/launch/garbage_localization.launch">
+    <arg name="config" value="$(arg config)"/>
+    <arg name="detection_topic" value="$(arg detection_topic)"/>
+    <arg name="point_cloud_topic" value="$(arg point_cloud_topic)"/>
+    <arg name="camera_info_topic" value="$(arg camera_info_topic)"/>
+    <arg name="output_topic" value="$(arg output_topic)"/>
+    <arg name="output_frame" value="$(arg output_frame)"/>
+    <arg name="rgb_frame" value="$(arg rgb_frame)"/>
+  </include>
+
+  <node if="$(arg enable_stabilizer)"
+        pkg="garbage_localization" type="paper_ball_map_stabilizer.py"
+        name="paper_ball_map_stabilizer" output="screen">
+    <rosparam command="load" file="$(arg config)"/>
+    <param name="input_topic" value="$(arg output_topic)"/>
+    <param name="output_topic" value="$(arg stable_output_topic)"/>
+    <param name="fixed_frame" value="$(arg output_frame)"/>
+  </node>
+</launch>

@@ -1,0 +1,10 @@
+person
+cup
+mug
+bottle
+bowl
+plate
+fork
+knife
+spoon
+chopsticks

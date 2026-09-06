@@ -1,0 +1,5 @@
+std_msgs/Header header
+string request_id
+bool success
+string error_message
+vision_msgs/DetectionArray reviewed_detections

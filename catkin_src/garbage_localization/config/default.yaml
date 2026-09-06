@@ -1,0 +1,34 @@
+detection_topic: /vision/fused_detections
+point_cloud_topic: /kinect2/sd/points
+camera_info_topic: /kinect2/hd/camera_info
+output_topic: /garbage_localization/objects
+diagnostics_topic: /diagnostics
+output_frame: base_link
+rgb_frame: kinect2_rgb_optical_frame
+
+target_classes: [bottle]
+minimum_detection_confidence: 0.25
+process_first_header_only: true
+duplicate_cache_size: 300
+
+cloud_cache_size: 40
+cloud_cache_seconds: 3.0
+max_cloud_time_delta: 0.08
+tf_timeout: 0.10
+
+min_depth: 0.5
+max_depth: 6.0
+roi_shrink_ratio: 0.10
+minimum_bbox_size: 4.0
+minimum_candidate_points: 20
+minimum_inlier_points: 12
+minimum_inlier_ratio: 0.25
+mad_scale: 2.5
+minimum_depth_band: 0.04
+
+workspace_min_x: 0.20
+workspace_max_x: 6.00
+workspace_min_y: -3.00
+workspace_max_y: 3.00
+workspace_min_z: -0.10
+workspace_max_z: 2.00

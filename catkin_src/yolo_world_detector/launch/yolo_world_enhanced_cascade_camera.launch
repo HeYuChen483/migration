@@ -1,0 +1,356 @@
+<launch>
+  <!-- Primary enhanced prompt model: original ten classes plus paper_ball and box. -->
+  <arg name="primary_model_path" default="/home/hyc/robocup_vision/yolov8s-worldv2-garbage.onnx"/>
+  <arg name="primary_class_names_path" default="$(find yolo_world_detector)/config/garbage_classes.txt"/>
+
+  <!-- Supplemental trained model: only paper_ball and box. The balanced model
+       oversamples paper_ball to improve recall without returning to full-screen false positives. -->
+  <arg name="enable_paper_box_supplement" default="true"/>
+  <arg name="paper_box_model_path" default="/home/hyc/robocup_vision/garbage_training/runs/paper_box_balanced_user_paper_wallneg_finetune_from_userbest_20260829_yoloworld_s/weights/best.onnx"/>
+  <arg name="paper_box_class_names_path" default="$(find yolo_world_detector)/config/paper_box_classes.txt"/>
+  <arg name="enable_paper_box_secondary" default="false"/>
+  <arg name="paper_box_secondary_model_path" default=""/>
+  <arg name="paper_box_secondary_class_names_path" default="$(arg paper_box_class_names_path)"/>
+  <arg name="enable_paper_ball_rgbd_vote" default="false"/>
+  <arg name="paper_ball_rgbd_vote_depth_topic" default="/kinect2/hd/image_depth_rect"/>
+  <arg name="paper_ball_rgbd_vote_point_cloud_topic" default="/kinect2/hd/points"/>
+  <arg name="paper_ball_rgbd_vote_camera_info_topic" default="/kinect2/hd/camera_info"/>
+  <arg name="paper_ball_rgbd_vote_output_frame" default="base_link"/>
+  <arg name="paper_ball_rgbd_vote_input_topic" default="/yolo_world/paper_box_secondary_detections"/>
+  <arg name="paper_ball_rgbd_vote_output_topic" default="/yolo_world/paper_box_secondary_rgbd_voted_detections"/>
+  <arg name="paper_box_merge_topic" default="/yolo_world/paper_box_tracked_detections"/>
+  <arg name="paper_box_untracked_merge_topic" default="/yolo_world/paper_box_detections"/>
+  <arg name="paper_box_secondary_merge_topic" default="/yolo_world/paper_box_secondary_tracked_detections"/>
+  <arg name="paper_box_secondary_untracked_merge_topic" default="/yolo_world/paper_box_secondary_detections"/>
+  <arg name="paper_ball_rgbd_vote_low_confidence_threshold" default="0.06"/>
+  <arg name="paper_ball_rgbd_vote_immediate_confidence_threshold" default="0.10"/>
+  <arg name="paper_ball_rgbd_vote_publish_confidence_floor" default="0.10"/>
+  <arg name="paper_ball_rgbd_vote_minimum_votes" default="2"/>
+  <arg name="paper_ball_rgbd_vote_window_seconds" default="0.90"/>
+  <arg name="paper_ball_rgbd_vote_hold_seconds" default="0.35"/>
+  <arg name="paper_ball_rgbd_vote_max_3d_match_distance" default="0.18"/>
+  <arg name="paper_ball_rgbd_vote_max_image_match_distance" default="28.0"/>
+  <arg name="paper_ball_rgbd_vote_min_center_y_ratio" default="0.20"/>
+  <arg name="paper_ball_rgbd_vote_max_cloud_time_delta" default="0.15"/>
+  <arg name="paper_ball_rgbd_vote_tf_timeout" default="0.05"/>
+  <arg name="paper_ball_rgbd_vote_min_ground_z" default="-0.60"/>
+  <arg name="paper_ball_rgbd_vote_max_ground_z" default="0.25"/>
+  <arg name="paper_ball_rgbd_vote_use_point_cloud" default="true"/>
+  <arg name="paper_ball_rgbd_vote_enable_ground_z_filter" default="true"/>
+  <arg name="paper_ball_rgbd_vote_require_output_frame_for_vote" default="false"/>
+  <arg name="paper_ball_rgbd_vote_require_depth_for_vote" default="true"/>
+  <arg name="paper_ball_rgbd_vote_filter_high_confidence_with_depth" default="true"/>
+  <arg name="paper_ball_rgbd_vote_allow_high_confidence_without_depth" default="true"/>
+  <arg name="paper_ball_rgbd_vote_enable_hsv_ground_filter" default="true"/>
+  <arg name="paper_ball_rgbd_vote_require_hsv_ground_filter" default="true"/>
+  <arg name="paper_ball_rgbd_vote_max_hsv_image_time_delta" default="0.50"/>
+  <arg name="paper_ball_rgbd_vote_hsv_ground_max_saturation" default="70"/>
+  <arg name="paper_ball_rgbd_vote_hsv_ground_min_value" default="20"/>
+  <arg name="paper_ball_rgbd_vote_hsv_ground_max_value" default="255"/>
+  <arg name="paper_ball_rgbd_vote_enable_hsv_clahe" default="true"/>
+  <arg name="paper_ball_rgbd_vote_hsv_clahe_clip_limit" default="2.0"/>
+  <arg name="paper_ball_rgbd_vote_hsv_clahe_tile_grid_size" default="8"/>
+  <arg name="paper_ball_rgbd_vote_ground_mask_morph_kernel" default="5"/>
+  <arg name="paper_ball_rgbd_vote_ground_mask_bottom_band_ratio" default="0.10"/>
+  <arg name="paper_ball_rgbd_vote_ground_mask_min_bottom_pixels" default="10"/>
+  <arg name="paper_ball_rgbd_vote_ground_contact_band_ratio" default="0.30"/>
+  <arg name="paper_ball_rgbd_vote_ground_contact_min_ratio" default="0.03"/>
+  <arg name="paper_ball_rgbd_vote_ground_below_band_ratio" default="0.18"/>
+  <arg name="paper_ball_rgbd_vote_ground_below_width_ratio" default="0.70"/>
+  <arg name="paper_ball_rgbd_vote_ground_below_min_ratio" default="0.10"/>
+  <arg name="paper_ball_rgbd_vote_ground_mask_debug_topic" default="/yolo_world/paper_ball_ground_mask"/>
+
+  <arg name="image_topic" default="/kinect2/hd/image_color"/>
+  <arg name="publish_annotated_image" default="true"/>
+  <arg name="primary_confidence_threshold" default="0.18"/>
+  <arg name="primary_detector_confidence_threshold" default="$(arg primary_confidence_threshold)"/>
+  <arg name="primary_track_confidence_threshold" default="$(arg primary_confidence_threshold)"/>
+  <arg name="paper_box_detector_confidence_threshold" default="0.15"/>
+  <arg name="paper_box_secondary_detector_confidence_threshold" default="0.12"/>
+  <arg name="paper_box_confidence_threshold" default="0.35"/>
+  <arg name="paper_box_secondary_confidence_threshold" default="0.40"/>
+  <arg name="primary_box_min_confidence" default="0.0"/>
+  <arg name="supplemental_box_min_confidence" default="0.0"/>
+  <arg name="box_merge_iou_threshold" default="0.45"/>
+  <arg name="box_person_overlap_iou_threshold" default="1.0"/>
+  <arg name="box_max_aspect_ratio" default="100.0"/>
+  <arg name="paper_box_temporal_hold_minimum_count" default="0"/>
+  <arg name="paper_box_temporal_hold_seconds" default="0.0"/>
+  <arg name="paper_box_fallback_center_crop_scale" default="1.0"/>
+  <arg name="paper_box_fallback_crop_mode" default="wide"/>
+  <arg name="paper_box_secondary_temporal_hold_minimum_count" default="0"/>
+  <arg name="paper_box_secondary_temporal_hold_seconds" default="0.0"/>
+  <arg name="paper_box_secondary_fallback_center_crop_scale" default="1.0"/>
+  <arg name="paper_box_secondary_fallback_crop_mode" default="wide"/>
+  <arg name="enable_bytetrack" default="true"/>
+  <arg name="primary_tracked_topic" default="/yolo_world/primary_tracked_detections"/>
+  <arg name="primary_bytetrack_classes" default="person,cup,mug,bottle,bowl,plate,fork,knife,spoon,chopsticks,paper_ball,box"/>
+  <arg name="primary_bytetrack_low_confidence_threshold" default="$(arg primary_detector_confidence_threshold)"/>
+  <arg name="primary_bytetrack_match_iou_threshold" default="0.30"/>
+  <arg name="primary_bytetrack_max_lost_seconds" default="0.50"/>
+  <arg name="primary_bytetrack_publish_lost_tracks" default="true"/>
+  <arg name="primary_bytetrack_suppress_lost_track_classes" default=""/>
+  <arg name="primary_bytetrack_min_track_hits" default="1"/>
+  <arg name="primary_bytetrack_delay_output_classes" default=""/>
+  <arg name="paper_box_tracked_topic" default="/yolo_world/paper_box_tracked_detections"/>
+  <arg name="paper_box_secondary_tracked_topic" default="/yolo_world/paper_box_secondary_tracked_detections"/>
+  <arg name="bytetrack_low_confidence_threshold" default="0.15"/>
+  <arg name="bytetrack_match_iou_threshold" default="0.30"/>
+  <arg name="bytetrack_max_lost_seconds" default="0.70"/>
+  <arg name="bytetrack_publish_lost_tracks" default="true"/>
+  <arg name="paper_box_bytetrack_suppress_lost_track_classes" default=""/>
+  <arg name="paper_box_secondary_bytetrack_suppress_lost_track_classes" default=""/>
+  <arg name="paper_box_bytetrack_min_track_hits" default="1"/>
+  <arg name="paper_box_secondary_bytetrack_min_track_hits" default="1"/>
+  <arg name="paper_box_bytetrack_delay_output_classes" default=""/>
+  <arg name="paper_box_secondary_bytetrack_delay_output_classes" default=""/>
+  <arg name="enable_sim_trash_bin_detector" default="false"/>
+  <arg name="trash_bin_detection_topic" default=""/>
+  <arg name="trash_bin_confidence_threshold" default="0.25"/>
+  <arg name="enhanced_annotated_topic" default="/yolo_world/enhanced_annotated_image"/>
+  <arg name="nms_threshold" default="0.45"/>
+  <arg name="skip_frames" default="1"/>
+  <arg name="intra_op_threads" default="1"/>
+  <arg name="execution_provider" default="cpu"/>
+  <arg name="cuda_device_id" default="0"/>
+
+  <node pkg="yolo_world_detector" type="yolo_world_detector_node"
+        name="yolo_world_detector" output="screen">
+    <param name="model_path" value="$(arg primary_model_path)"/>
+    <param name="class_names_path" value="$(arg primary_class_names_path)"/>
+    <param name="image_topic" value="$(arg image_topic)"/>
+    <param name="result_topic" value="/yolo_world/detections"/>
+    <param name="annotated_topic" value="/yolo_world/annotated_image"/>
+    <param name="publish_annotated_image" value="$(arg publish_annotated_image)"/>
+    <param name="confidence_threshold" value="$(arg primary_detector_confidence_threshold)"/>
+    <param name="nms_threshold" value="$(arg nms_threshold)"/>
+    <param name="input_width" value="640"/>
+    <param name="input_height" value="640"/>
+    <param name="skip_frames" value="$(arg skip_frames)"/>
+    <param name="intra_op_threads" value="$(arg intra_op_threads)"/>
+    <param name="execution_provider" value="$(arg execution_provider)"/>
+    <param name="cuda_device_id" value="$(arg cuda_device_id)"/>
+    <param name="temporal_hold_minimum_count" value="0"/>
+    <param name="temporal_hold_seconds" value="0.0"/>
+    <param name="fallback_center_crop_scale" value="1.0"/>
+  </node>
+
+  <group if="$(arg enable_paper_box_supplement)">
+    <node pkg="yolo_world_detector" type="yolo_world_detector_node"
+          name="paper_box_detector" output="screen">
+      <param name="model_path" value="$(arg paper_box_model_path)"/>
+      <param name="class_names_path" value="$(arg paper_box_class_names_path)"/>
+      <param name="image_topic" value="$(arg image_topic)"/>
+      <param name="result_topic" value="/yolo_world/paper_box_detections"/>
+      <param name="annotated_topic" value="/yolo_world/paper_box_annotated_image"/>
+      <param name="publish_annotated_image" value="$(arg publish_annotated_image)"/>
+      <param name="confidence_threshold" value="$(arg paper_box_detector_confidence_threshold)"/>
+      <param name="nms_threshold" value="$(arg nms_threshold)"/>
+      <param name="input_width" value="640"/>
+      <param name="input_height" value="640"/>
+      <param name="skip_frames" value="$(arg skip_frames)"/>
+      <param name="intra_op_threads" value="$(arg intra_op_threads)"/>
+      <param name="execution_provider" value="$(arg execution_provider)"/>
+      <param name="cuda_device_id" value="$(arg cuda_device_id)"/>
+      <param name="temporal_hold_minimum_count" value="$(arg paper_box_temporal_hold_minimum_count)"/>
+      <param name="temporal_hold_seconds" value="$(arg paper_box_temporal_hold_seconds)"/>
+      <param name="fallback_center_crop_scale" value="$(arg paper_box_fallback_center_crop_scale)"/>
+      <param name="fallback_crop_mode" value="$(arg paper_box_fallback_crop_mode)"/>
+    </node>
+  </group>
+
+  <group if="$(arg enable_paper_box_secondary)">
+    <node pkg="yolo_world_detector" type="yolo_world_detector_node"
+          name="paper_box_secondary_detector" output="screen">
+      <param name="model_path" value="$(arg paper_box_secondary_model_path)"/>
+      <param name="class_names_path" value="$(arg paper_box_secondary_class_names_path)"/>
+      <param name="image_topic" value="$(arg image_topic)"/>
+      <param name="result_topic" value="/yolo_world/paper_box_secondary_detections"/>
+      <param name="annotated_topic" value="/yolo_world/paper_box_secondary_annotated_image"/>
+      <param name="publish_annotated_image" value="$(arg publish_annotated_image)"/>
+      <param name="confidence_threshold" value="$(arg paper_box_secondary_detector_confidence_threshold)"/>
+      <param name="nms_threshold" value="$(arg nms_threshold)"/>
+      <param name="input_width" value="640"/>
+      <param name="input_height" value="640"/>
+      <param name="skip_frames" value="$(arg skip_frames)"/>
+      <param name="intra_op_threads" value="$(arg intra_op_threads)"/>
+      <param name="execution_provider" value="$(arg execution_provider)"/>
+      <param name="cuda_device_id" value="$(arg cuda_device_id)"/>
+      <param name="temporal_hold_minimum_count" value="$(arg paper_box_secondary_temporal_hold_minimum_count)"/>
+      <param name="temporal_hold_seconds" value="$(arg paper_box_secondary_temporal_hold_seconds)"/>
+      <param name="fallback_center_crop_scale" value="$(arg paper_box_secondary_fallback_center_crop_scale)"/>
+      <param name="fallback_crop_mode" value="$(arg paper_box_secondary_fallback_crop_mode)"/>
+    </node>
+  </group>
+
+  <group if="$(arg enable_paper_ball_rgbd_vote)">
+    <node pkg="yolo_world_detector" type="paper_ball_rgbd_vote_node"
+          name="paper_ball_rgbd_vote" output="screen">
+      <param name="detections_topic" value="$(arg paper_ball_rgbd_vote_input_topic)"/>
+      <param name="image_topic" value="$(arg image_topic)"/>
+      <param name="depth_topic" value="$(arg paper_ball_rgbd_vote_depth_topic)"/>
+      <param name="point_cloud_topic" value="$(arg paper_ball_rgbd_vote_point_cloud_topic)"/>
+      <param name="camera_info_topic" value="$(arg paper_ball_rgbd_vote_camera_info_topic)"/>
+      <param name="output_frame" value="$(arg paper_ball_rgbd_vote_output_frame)"/>
+      <param name="output_topic" value="$(arg paper_ball_rgbd_vote_output_topic)"/>
+      <param name="low_confidence_threshold" value="$(arg paper_ball_rgbd_vote_low_confidence_threshold)"/>
+      <param name="immediate_confidence_threshold" value="$(arg paper_ball_rgbd_vote_immediate_confidence_threshold)"/>
+      <param name="publish_confidence_floor" value="$(arg paper_ball_rgbd_vote_publish_confidence_floor)"/>
+      <param name="minimum_votes" value="$(arg paper_ball_rgbd_vote_minimum_votes)"/>
+      <param name="vote_window_seconds" value="$(arg paper_ball_rgbd_vote_window_seconds)"/>
+      <param name="hold_seconds" value="$(arg paper_ball_rgbd_vote_hold_seconds)"/>
+      <param name="max_3d_match_distance" value="$(arg paper_ball_rgbd_vote_max_3d_match_distance)"/>
+      <param name="max_image_match_distance" value="$(arg paper_ball_rgbd_vote_max_image_match_distance)"/>
+      <param name="min_center_y_ratio" value="$(arg paper_ball_rgbd_vote_min_center_y_ratio)"/>
+      <param name="max_cloud_time_delta" value="$(arg paper_ball_rgbd_vote_max_cloud_time_delta)"/>
+      <param name="tf_timeout" value="$(arg paper_ball_rgbd_vote_tf_timeout)"/>
+      <param name="min_ground_z" value="$(arg paper_ball_rgbd_vote_min_ground_z)"/>
+      <param name="max_ground_z" value="$(arg paper_ball_rgbd_vote_max_ground_z)"/>
+      <param name="use_point_cloud" value="$(arg paper_ball_rgbd_vote_use_point_cloud)"/>
+      <param name="enable_ground_z_filter" value="$(arg paper_ball_rgbd_vote_enable_ground_z_filter)"/>
+      <param name="require_output_frame_for_vote" value="$(arg paper_ball_rgbd_vote_require_output_frame_for_vote)"/>
+      <param name="require_depth_for_vote" value="$(arg paper_ball_rgbd_vote_require_depth_for_vote)"/>
+      <param name="filter_high_confidence_with_depth" value="$(arg paper_ball_rgbd_vote_filter_high_confidence_with_depth)"/>
+      <param name="allow_high_confidence_without_depth" value="$(arg paper_ball_rgbd_vote_allow_high_confidence_without_depth)"/>
+      <param name="enable_hsv_ground_filter" value="$(arg paper_ball_rgbd_vote_enable_hsv_ground_filter)"/>
+      <param name="require_hsv_ground_filter" value="$(arg paper_ball_rgbd_vote_require_hsv_ground_filter)"/>
+      <param name="max_hsv_image_time_delta" value="$(arg paper_ball_rgbd_vote_max_hsv_image_time_delta)"/>
+      <param name="hsv_ground_max_saturation" value="$(arg paper_ball_rgbd_vote_hsv_ground_max_saturation)"/>
+      <param name="hsv_ground_min_value" value="$(arg paper_ball_rgbd_vote_hsv_ground_min_value)"/>
+      <param name="hsv_ground_max_value" value="$(arg paper_ball_rgbd_vote_hsv_ground_max_value)"/>
+      <param name="enable_hsv_clahe" value="$(arg paper_ball_rgbd_vote_enable_hsv_clahe)"/>
+      <param name="hsv_clahe_clip_limit" value="$(arg paper_ball_rgbd_vote_hsv_clahe_clip_limit)"/>
+      <param name="hsv_clahe_tile_grid_size" value="$(arg paper_ball_rgbd_vote_hsv_clahe_tile_grid_size)"/>
+      <param name="ground_mask_morph_kernel" value="$(arg paper_ball_rgbd_vote_ground_mask_morph_kernel)"/>
+      <param name="ground_mask_bottom_band_ratio" value="$(arg paper_ball_rgbd_vote_ground_mask_bottom_band_ratio)"/>
+      <param name="ground_mask_min_bottom_pixels" value="$(arg paper_ball_rgbd_vote_ground_mask_min_bottom_pixels)"/>
+      <param name="ground_contact_band_ratio" value="$(arg paper_ball_rgbd_vote_ground_contact_band_ratio)"/>
+      <param name="ground_contact_min_ratio" value="$(arg paper_ball_rgbd_vote_ground_contact_min_ratio)"/>
+      <param name="ground_below_band_ratio" value="$(arg paper_ball_rgbd_vote_ground_below_band_ratio)"/>
+      <param name="ground_below_width_ratio" value="$(arg paper_ball_rgbd_vote_ground_below_width_ratio)"/>
+      <param name="ground_below_min_ratio" value="$(arg paper_ball_rgbd_vote_ground_below_min_ratio)"/>
+      <param name="ground_mask_debug_topic" value="$(arg paper_ball_rgbd_vote_ground_mask_debug_topic)"/>
+    </node>
+  </group>
+
+  <group if="$(arg enable_sim_trash_bin_detector)">
+    <node pkg="yolo_world_detector" type="sim_trash_bin_detector.py"
+          name="sim_trash_bin_detector" output="screen">
+      <param name="image_topic" value="$(arg image_topic)"/>
+      <param name="output_topic" value="$(arg trash_bin_detection_topic)"/>
+      <param name="confidence" value="0.90"/>
+      <param name="min_marker_area" value="35.0"/>
+    </node>
+  </group>
+
+  <group if="$(arg enable_bytetrack)">
+    <node pkg="yolo_world_detector" type="bytetrack_node"
+          name="primary_bytetrack" output="screen">
+      <param name="detections_topic" value="/yolo_world/detections"/>
+      <param name="tracked_topic" value="$(arg primary_tracked_topic)"/>
+      <param name="high_confidence_threshold" value="$(arg primary_track_confidence_threshold)"/>
+      <param name="low_confidence_threshold" value="$(arg primary_bytetrack_low_confidence_threshold)"/>
+      <param name="new_track_threshold" value="$(arg primary_track_confidence_threshold)"/>
+      <param name="match_iou_threshold" value="$(arg primary_bytetrack_match_iou_threshold)"/>
+      <param name="max_lost_seconds" value="$(arg primary_bytetrack_max_lost_seconds)"/>
+      <param name="publish_lost_tracks" value="$(arg primary_bytetrack_publish_lost_tracks)"/>
+      <param name="suppress_lost_track_classes" value="$(arg primary_bytetrack_suppress_lost_track_classes)"/>
+      <param name="min_track_hits" value="$(arg primary_bytetrack_min_track_hits)"/>
+      <param name="delay_output_classes" value="$(arg primary_bytetrack_delay_output_classes)"/>
+      <param name="tracked_classes" value="$(arg primary_bytetrack_classes)"/>
+      <param name="passthrough_untracked_classes" value="true"/>
+      <param name="class_aware" value="true"/>
+    </node>
+
+    <group if="$(arg enable_paper_box_supplement)">
+      <node pkg="yolo_world_detector" type="bytetrack_node"
+            name="paper_box_bytetrack" output="screen">
+        <param name="detections_topic" value="/yolo_world/paper_box_detections"/>
+        <param name="tracked_topic" value="$(arg paper_box_tracked_topic)"/>
+        <param name="high_confidence_threshold" value="$(arg paper_box_confidence_threshold)"/>
+        <param name="low_confidence_threshold" value="$(arg bytetrack_low_confidence_threshold)"/>
+        <param name="new_track_threshold" value="$(arg paper_box_confidence_threshold)"/>
+        <param name="match_iou_threshold" value="$(arg bytetrack_match_iou_threshold)"/>
+        <param name="max_lost_seconds" value="$(arg bytetrack_max_lost_seconds)"/>
+        <param name="publish_lost_tracks" value="$(arg bytetrack_publish_lost_tracks)"/>
+        <param name="suppress_lost_track_classes" value="$(arg paper_box_bytetrack_suppress_lost_track_classes)"/>
+        <param name="min_track_hits" value="$(arg paper_box_bytetrack_min_track_hits)"/>
+        <param name="delay_output_classes" value="$(arg paper_box_bytetrack_delay_output_classes)"/>
+        <param name="tracked_classes" value="paper_ball,box"/>
+        <param name="passthrough_untracked_classes" value="true"/>
+        <param name="class_aware" value="true"/>
+      </node>
+    </group>
+
+    <group if="$(arg enable_paper_box_secondary)">
+      <node pkg="yolo_world_detector" type="bytetrack_node"
+            name="paper_box_secondary_bytetrack" output="screen">
+        <param name="detections_topic" value="/yolo_world/paper_box_secondary_detections"/>
+        <param name="tracked_topic" value="$(arg paper_box_secondary_tracked_topic)"/>
+        <param name="high_confidence_threshold" value="$(arg paper_box_secondary_confidence_threshold)"/>
+        <param name="low_confidence_threshold" value="$(arg bytetrack_low_confidence_threshold)"/>
+        <param name="new_track_threshold" value="$(arg paper_box_secondary_confidence_threshold)"/>
+        <param name="match_iou_threshold" value="$(arg bytetrack_match_iou_threshold)"/>
+        <param name="max_lost_seconds" value="$(arg bytetrack_max_lost_seconds)"/>
+        <param name="publish_lost_tracks" value="$(arg bytetrack_publish_lost_tracks)"/>
+        <param name="suppress_lost_track_classes" value="$(arg paper_box_secondary_bytetrack_suppress_lost_track_classes)"/>
+        <param name="min_track_hits" value="$(arg paper_box_secondary_bytetrack_min_track_hits)"/>
+        <param name="delay_output_classes" value="$(arg paper_box_secondary_bytetrack_delay_output_classes)"/>
+        <param name="tracked_classes" value="paper_ball,box"/>
+        <param name="passthrough_untracked_classes" value="true"/>
+        <param name="class_aware" value="true"/>
+      </node>
+    </group>
+
+    <node pkg="yolo_world_detector" type="enhanced_detection_merger_node"
+          name="enhanced_detection_merger" output="screen">
+      <param name="primary_topic" value="$(arg primary_tracked_topic)"/>
+      <param name="supplemental_topic" value="$(arg paper_box_merge_topic)"/>
+      <param name="supplemental2_topic" value="$(arg paper_box_secondary_merge_topic)"/>
+      <param name="output_topic" value="/yolo_world/enhanced_detections"/>
+      <param name="trash_bin_topic" value="$(arg trash_bin_detection_topic)"/>
+      <param name="merge_iou_threshold" value="0.45"/>
+      <param name="supplemental_min_confidence" value="$(arg bytetrack_low_confidence_threshold)"/>
+      <param name="supplemental2_min_confidence" value="$(arg paper_box_secondary_confidence_threshold)"/>
+      <param name="primary_box_min_confidence" value="$(arg primary_box_min_confidence)"/>
+      <param name="supplemental_box_min_confidence" value="$(arg supplemental_box_min_confidence)"/>
+      <param name="box_merge_iou_threshold" value="$(arg box_merge_iou_threshold)"/>
+      <param name="box_person_overlap_iou_threshold" value="$(arg box_person_overlap_iou_threshold)"/>
+      <param name="box_max_aspect_ratio" value="$(arg box_max_aspect_ratio)"/>
+      <param name="trash_bin_min_confidence" value="$(arg trash_bin_confidence_threshold)"/>
+      <!-- YOLO-World inference is slower than the Gazebo bin projection stream;
+           keep the sim-only supplemental bin merge tolerant to that lag. -->
+      <param name="max_stamp_delta_seconds" value="2.50"/>
+    </node>
+  </group>
+
+  <group unless="$(arg enable_bytetrack)">
+    <node pkg="yolo_world_detector" type="enhanced_detection_merger_node"
+          name="enhanced_detection_merger" output="screen">
+      <param name="primary_topic" value="/yolo_world/detections"/>
+      <param name="supplemental_topic" value="$(arg paper_box_untracked_merge_topic)"/>
+      <param name="supplemental2_topic" value="$(arg paper_box_secondary_untracked_merge_topic)"/>
+      <param name="output_topic" value="/yolo_world/enhanced_detections"/>
+      <param name="trash_bin_topic" value="$(arg trash_bin_detection_topic)"/>
+      <param name="merge_iou_threshold" value="0.45"/>
+      <param name="supplemental_min_confidence" value="$(arg paper_box_confidence_threshold)"/>
+      <param name="supplemental2_min_confidence" value="$(arg paper_box_secondary_confidence_threshold)"/>
+      <param name="primary_box_min_confidence" value="$(arg primary_box_min_confidence)"/>
+      <param name="supplemental_box_min_confidence" value="$(arg supplemental_box_min_confidence)"/>
+      <param name="box_merge_iou_threshold" value="$(arg box_merge_iou_threshold)"/>
+      <param name="box_person_overlap_iou_threshold" value="$(arg box_person_overlap_iou_threshold)"/>
+      <param name="box_max_aspect_ratio" value="$(arg box_max_aspect_ratio)"/>
+      <param name="trash_bin_min_confidence" value="$(arg trash_bin_confidence_threshold)"/>
+      <param name="max_stamp_delta_seconds" value="2.50"/>
+    </node>
+  </group>
+
+  <node pkg="yolo_world_detector" type="detection_overlay_node"
+        name="enhanced_detection_overlay" output="screen">
+    <param name="image_topic" value="$(arg image_topic)"/>
+    <param name="detections_topic" value="/yolo_world/enhanced_detections"/>
+    <param name="annotated_topic" value="$(arg enhanced_annotated_topic)"/>
+    <param name="max_stamp_delta_seconds" value="2.50"/>
+  </node>
+
+</launch>

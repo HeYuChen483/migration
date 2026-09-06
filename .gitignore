@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+.catkin_tools/
+build/
+devel/
+install/
+logs/
+*.bag
+*.log
+*.tmp

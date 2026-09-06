@@ -1,0 +1,35 @@
+<launch>
+  <!-- Dedicated live-camera detector for the locally trained paper_ball / box model. -->
+  <arg name="model_path" default="/home/hyc/robocup_vision/garbage_training/runs/paper_box_balanced_user_paper_wallneg_finetune_from_userbest_20260829_yoloworld_s/weights/best.onnx"/>
+  <arg name="class_names_path" default="$(find yolo_world_detector)/config/paper_box_classes.txt"/>
+  <arg name="image_topic" default="/kinect2/hd/image_color"/>
+  <arg name="result_topic" default="/yolo_world/paper_box_detections"/>
+  <arg name="annotated_topic" default="/yolo_world/paper_box_annotated_image"/>
+  <arg name="publish_annotated_image" default="true"/>
+  <arg name="confidence_threshold" default="0.35"/>
+  <arg name="nms_threshold" default="0.45"/>
+  <arg name="skip_frames" default="1"/>
+  <arg name="intra_op_threads" default="1"/>
+  <arg name="temporal_hold_minimum_count" default="0"/>
+  <arg name="temporal_hold_seconds" default="0.0"/>
+  <arg name="fallback_center_crop_scale" default="1.0"/>
+
+  <node pkg="yolo_world_detector" type="yolo_world_detector_node"
+        name="paper_box_detector" output="screen">
+    <param name="model_path" value="$(arg model_path)"/>
+    <param name="class_names_path" value="$(arg class_names_path)"/>
+    <param name="image_topic" value="$(arg image_topic)"/>
+    <param name="result_topic" value="$(arg result_topic)"/>
+    <param name="annotated_topic" value="$(arg annotated_topic)"/>
+    <param name="publish_annotated_image" value="$(arg publish_annotated_image)"/>
+    <param name="confidence_threshold" value="$(arg confidence_threshold)"/>
+    <param name="nms_threshold" value="$(arg nms_threshold)"/>
+    <param name="input_width" value="640"/>
+    <param name="input_height" value="640"/>
+    <param name="skip_frames" value="$(arg skip_frames)"/>
+    <param name="intra_op_threads" value="$(arg intra_op_threads)"/>
+    <param name="temporal_hold_minimum_count" value="$(arg temporal_hold_minimum_count)"/>
+    <param name="temporal_hold_seconds" value="$(arg temporal_hold_seconds)"/>
+    <param name="fallback_center_crop_scale" value="$(arg fallback_center_crop_scale)"/>
+  </node>
+</launch>

@@ -1,0 +1,36 @@
+# four_paper_ball real-robot transfer profile template (2026-08-18)
+# Copy this file on the senior computer, fill in the real topic/frame/map values,
+# then run run_four_paper_ball_real_robot_precheck.py before any full task run.
+profile: real_robot_four_paper_ball_template
+scenario: four_paper_ball
+workspace_hint: /home/hyc/catkin_wa
+object_topic: /garbage_localization/objects
+# Detection/camera topics must match the actual robot launch files.
+detection_topic: /vision/fused_detections
+camera_info_topic: /kinect2/hd/camera_info
+point_cloud_topic: /kinect2/sd/points
+scan_topic: /scan
+tf_topic: /tf
+tf_static_topic: /tf_static
+navigation_frame: map
+robot_base_frame: base_footprint
+move_base_action: /move_base
+navigation_map: /home/hyc/catkin_wa/src/wpr_simulation/maps/map.yaml
+target_classes: [bottle, paper_ball, box]
+dropoff_classes: [trash_bin]
+room_patrol: on
+visit_count: 4
+final_exit: auto
+pickup_action: dry-run
+dropoff_action: dry-run
+precheck_timeouts:
+  ros_master_sec: 5.0
+  topic_sec: 2.0
+  move_base_sec: 2.0
+  tf_sec: 3.0
+real_robot_rules:
+  keep_trash_bin_dropoff_only: true
+  keep_pickup_dropoff_actions_safe_until_hardware_tested: true
+  do_not_use_gazebo_truth_interfaces: true
+  do_not_raise_detection_threshold_without_real_validation: true
+  do_not_edit_nav_pkg_without_explicit_approval: true

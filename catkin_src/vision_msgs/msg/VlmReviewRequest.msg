@@ -1,0 +1,11 @@
+std_msgs/Header header
+string request_id
+string trigger_reason
+string[] candidate_classes
+vision_msgs/DetectionArray fast_detections
+sensor_msgs/Image review_image
+bool image_is_roi
+float32 roi_x
+float32 roi_y
+float32 roi_width
+float32 roi_height

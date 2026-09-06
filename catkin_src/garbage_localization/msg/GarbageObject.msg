@@ -1,0 +1,9 @@
+string class_name
+float32 confidence
+geometry_msgs/Point position
+float32 bbox_x
+float32 bbox_y
+float32 bbox_width
+float32 bbox_height
+uint32 valid_point_count
+float32 median_depth

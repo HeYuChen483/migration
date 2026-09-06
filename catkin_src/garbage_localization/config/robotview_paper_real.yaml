@@ -1,0 +1,52 @@
+detection_topic: /yolo_world/enhanced_detections
+point_cloud_topic: /kinect2/hd/points
+camera_info_topic: /kinect2/hd/camera_info
+output_topic: /garbage_localization/objects
+diagnostics_topic: /diagnostics
+output_frame: map
+rgb_frame: kinect2_rgb_optical_frame
+
+# Match the current live paper_ball recall profile.  The detector already gates
+# secondary paper detections at 0.12, so localization should not silently drop
+# those same accepted boxes.
+target_classes: [paper_ball, bottle, box]
+minimum_detection_confidence: 0.12
+process_first_header_only: true
+duplicate_cache_size: 300
+
+cloud_cache_size: 60
+cloud_cache_seconds: 4.0
+max_cloud_time_delta: 0.08
+tf_timeout: 0.15
+
+min_depth: 0.35
+max_depth: 6.0
+roi_shrink_ratio: 0.10
+minimum_bbox_size: 4.0
+minimum_candidate_points: 12
+minimum_inlier_points: 8
+minimum_inlier_ratio: 0.20
+mad_scale: 2.5
+minimum_depth_band: 0.04
+
+# Moving-robot use: publish object coordinates in map, then stabilize them over
+# several frames before giving navigation a target. Keep x/y broad because these
+# are map coordinates, not base_link-relative workspace coordinates.
+workspace_min_x: -20.00
+workspace_max_x: 20.00
+workspace_min_y: -20.00
+workspace_max_y: 20.00
+workspace_min_z: -0.20
+workspace_max_z: 2.00
+
+stabilizer:
+  input_topic: /garbage_localization/objects
+  output_topic: /garbage_localization/stable_objects
+  fixed_frame: map
+  target_classes: [paper_ball]
+  min_confidence: 0.12
+  min_valid_points: 5
+  min_observations: 3
+  window_seconds: 4.0
+  cluster_radius: 0.35
+  publish_rate: 5.0
