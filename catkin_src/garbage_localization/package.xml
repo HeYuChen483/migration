@@ -14,7 +14,6 @@
   <depend>geometry_msgs</depend>
   <depend>roscpp</depend>
   <depend>rospy</depend>
-  <depend>gazebo_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
@@ -26,7 +25,6 @@
   <exec_depend>message_runtime</exec_depend>
 
   <exec_depend>roslaunch</exec_depend>
-  <exec_depend>wpr_simulation</exec_depend>
   <exec_depend>yolo_world_detector</exec_depend>
 
   <test_depend>rostest</test_depend>

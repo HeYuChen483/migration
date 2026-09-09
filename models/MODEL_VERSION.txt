@@ -1,7 +1,16 @@
-paper_ball robot-view specialist
-generation: 7
-date: 2026-09-06
-source run: paper_box_robotview_threefusion_specialist_continue7_20260906_150818_yoloworld_s
-included file: paper_ball_robotview_continue7_20260906_150818_best.onnx
-recommended live threshold: 0.12
-rgbd vote: disabled
+2026-09-06 dual-model real-robot vision route
+
+primary garbage model:
+  file: yolov8s-worldv2-garbage.onnx
+  sha256: d238aaccce31e131e2948c423b5a6469a19c0a335ffad8320b8c3cf42e6a24f9
+  recommended threshold: 0.18
+
+secondary paper_ball expert:
+  generation: 7
+  source run: paper_box_robotview_threefusion_specialist_continue7_20260906_150818_yoloworld_s
+  file: paper_ball_robotview_continue7_20260906_150818_best.onnx
+  sha256: 3c94c0ee50c8d681c3e0d2a875c6ee55a61c37d214a63a8541d9ebdadb65caf5
+  detector entry threshold: 0.06
+  recommended live threshold: 0.12
+  rgbd vote: disabled
+  paper/box stable supplement: disabled

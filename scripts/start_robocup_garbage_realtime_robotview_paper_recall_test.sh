@@ -12,11 +12,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RELEASE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 G7_MODEL="$RELEASE_ROOT/models/paper_ball_robotview_continue7_20260906_150818_best.onnx"
-
-PRIMARY_MODEL_FALLBACK="/home/hyc/robocup_vision/yolov8s-worldv2-garbage.onnx"
+PRIMARY_MODEL_FALLBACK="$RELEASE_ROOT/models/yolov8s-worldv2-garbage.onnx"
 
 if [[ ! -f "$G7_MODEL" ]]; then
   echo "ERROR: generation 7 paper_ball model not found: $G7_MODEL" >&2
+  exit 1
+fi
+if [[ ! -f "$PRIMARY_MODEL_FALLBACK" && -z "${PRIMARY_MODEL_PATH:-}" ]]; then
+  echo "ERROR: primary garbage model not found: $PRIMARY_MODEL_FALLBACK" >&2
+  echo "Set PRIMARY_MODEL_PATH=/path/to/yolov8s-worldv2-garbage.onnx to override." >&2
   exit 1
 fi
 

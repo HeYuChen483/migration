@@ -3,16 +3,29 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MIGRATION_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [[ -f "$MIGRATION_ROOT/models/yolov8s-worldv2-garbage.onnx" ]]; then
+  DEFAULT_PRIMARY_MODEL_PATH="$MIGRATION_ROOT/models/yolov8s-worldv2-garbage.onnx"
+else
+  DEFAULT_PRIMARY_MODEL_PATH="/home/hyc/robocup_vision/yolov8s-worldv2-garbage.onnx"
+fi
+if [[ -f "$MIGRATION_ROOT/models/paper_ball_robotview_continue7_20260906_150818_best.onnx" ]]; then
+  DEFAULT_PAPER_BALL_SPECIALIST_MODEL_PATH="$MIGRATION_ROOT/models/paper_ball_robotview_continue7_20260906_150818_best.onnx"
+else
+  DEFAULT_PAPER_BALL_SPECIALIST_MODEL_PATH="/home/hyc/robocup_vision/garbage_training/runs/paper_box_robotview_threefusion_specialist_continue7_20260906_150818_yoloworld_s/weights/best.onnx"
+fi
+if [[ -d "$MIGRATION_ROOT/third_party/onnxruntime/lib" ]]; then
+  DEFAULT_ONNXRUNTIME_LIB_DIR="$MIGRATION_ROOT/third_party/onnxruntime/lib"
+else
+  DEFAULT_ONNXRUNTIME_LIB_DIR="/home/hyc/robocup_vision/onnxruntime/lib"
+fi
+
 if [[ -d "$MIGRATION_ROOT/02_models" ]]; then
   DEFAULT_PRIMARY_MODEL_PATH="$MIGRATION_ROOT/02_models/primary_full/yolov8s-worldv2-garbage.onnx"
   DEFAULT_PAPER_BOX_MODEL_PATH="$MIGRATION_ROOT/02_models/paper_box_supplement/paper_box_balanced_best.onnx"
   DEFAULT_PAPER_BALL_SPECIALIST_MODEL_PATH="$MIGRATION_ROOT/02_models/paper_ball_specialist/paper_ball_farhard_best.onnx"
   DEFAULT_ONNXRUNTIME_LIB_DIR="$MIGRATION_ROOT/03_runtime/onnxruntime/lib"
 else
-  DEFAULT_PRIMARY_MODEL_PATH="/home/hyc/robocup_vision/yolov8s-worldv2-garbage.onnx"
   DEFAULT_PAPER_BOX_MODEL_PATH="/home/hyc/robocup_vision/garbage_training/runs/paper_box_balanced_user_paper_wallneg_finetune_from_userbest_20260829_yoloworld_s/weights/best.onnx"
-  DEFAULT_PAPER_BALL_SPECIALIST_MODEL_PATH="/home/hyc/robocup_vision/garbage_training/runs/paper_box_farhard_finetune_from_selfpaperbest_20260829_yoloworld_s/weights/best.onnx"
-  DEFAULT_ONNXRUNTIME_LIB_DIR="/home/hyc/robocup_vision/onnxruntime/lib"
 fi
 
 WORKSPACE=${WORKSPACE:-/home/hyc/catkin_wa}
